@@ -29,7 +29,6 @@ void SelectSort(int n, int arr[n], int *M, int *C) {
             (*C)++;
             if (arr[j] < arr[minidx]) minidx = j;
         }
-        /* Своп всегда — намеренно, для сравнения с SelectSortImproved */
         int tmp = arr[i]; arr[i] = arr[minidx]; arr[minidx] = tmp;
         *M += 3;
     }
@@ -125,6 +124,42 @@ void ShellSort(int ns, int steps[ns], int n, int arr[n], int *M, int *C) {
             arr[j + h] = key;
             (*M)++;
         }
+    }
+}
+
+/* --- HeapSort --- */
+
+/* Просеивание элемента i вниз в куче размером n */
+static void SiftDown(int n, int arr[], int i, int *M, int *C) {
+    while (1) {
+        int largest = i;
+        int l = 2 * i + 1;
+        int r = 2 * i + 2;
+        if (l < n) {
+            (*C)++;
+            if (arr[l] > arr[largest]) largest = l;
+        }
+        if (r < n) {
+            (*C)++;
+            if (arr[r] > arr[largest]) largest = r;
+        }
+        if (largest == i) break;
+        int tmp = arr[i]; arr[i] = arr[largest]; arr[largest] = tmp;
+        *M += 3;
+        i = largest;
+    }
+}
+
+void HeapSort(int n, int arr[n], int *M, int *C) {
+    *M = 0; *C = 0;
+    /* Построение кучи (фаза 1) */
+    for (int i = n / 2 - 1; i >= 0; i--)
+        SiftDown(n, arr, i, M, C);
+    /* Извлечение элементов (фаза 2) */
+    for (int end = n - 1; end > 0; end--) {
+        int tmp = arr[0]; arr[0] = arr[end]; arr[end] = tmp;
+        *M += 3;
+        SiftDown(end, arr, 0, M, C);
     }
 }
 
