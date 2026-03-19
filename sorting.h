@@ -12,6 +12,7 @@ void BubbleSort(int n, int arr[n], int *M, int *C);
 void ShakerSort(int n, int arr[n], int *M, int *C);
 void InsertSort(int n, int arr[n], int *M, int *C);
 void ShellSort(int ns, int steps[ns], int n, int arr[n], int *M, int *C);
+void HeapSort(int n, int arr[n], int *M, int *C);
 
 /* Заполняет dec/rnd/inc массивы и прогоняет sort, возвращает M и C для каждого случая */
 void RunSort(int n, void(*sort)(int, int*, int*, int*),
