@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -O2
 
 SRCS_COMMON = sorting.c
 
-all: select bubble shaker insert shell compare heap
+all: select bubble shaker insert shell compare heap bsearch
 
 select: main_select.c $(SRCS_COMMON)
 	$(CC) $(CFLAGS) -o select main_select.c $(SRCS_COMMON)
@@ -26,8 +26,11 @@ compare: main_compare.c $(SRCS_COMMON)
 heap: main_heap.c $(SRCS_COMMON)
 	$(CC) $(CFLAGS) -o heap main_heap.c $(SRCS_COMMON) -lm
 
+bsearch: main_bsearch.c search.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o bsearch main_bsearch.c search.c $(SRCS_COMMON) -lm
+
 clean:
-	rm -f select bubble shaker insert shell compare heap
+	rm -f select bubble shaker insert shell compare heap bsearch
 
 PACK_FILE = project.pack
 PACK_FILES = $(sort $(wildcard *.h *.c) Makefile)
