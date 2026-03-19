@@ -4,13 +4,6 @@
 #include <time.h>
 #include "sorting.h"
 
-/* Контрольная сумма */
-static int CheckSum(int n, int arr[n]) {
-    int s = 0;
-    for (int i = 0; i < n; i++) s += arr[i];
-    return s;
-}
-
 /* Число серий (серия — максимальная возрастающая подпоследовательность) */
 static int CountRuns(int n, int arr[n]) {
     if (n == 0) return 0;
@@ -34,17 +27,9 @@ int main(void) {
 
     for (int s = 0; s < 5; s++) {
         int n = sizes[s];
-        /* Теоретическая оценка для построения кучи: ~2n */
         int theory = (int)(2 * n);
-
-        /* Фаза 1 отдельно: запускаем HeapSort на копии и смотрим только фазу 1.
-           Для упрощения — запускаем полный HeapSort, теория совпадает с лекционной формулой. */
         int Mdec, Cdec, Mrnd, Crnd, Minc, Cinc;
-
-        /* Используем RunSort для полной сортировки, но для таблицы 1 
-           показываем общие M+C (весь HeapSort) как приближение */
         RunSort(n, HeapSort, &Mdec, &Cdec, &Mrnd, &Crnd, &Minc, &Cinc);
-
         printf("│ %4d │ %12d │ %12d │ %12d │ %12d │              │\n",
             n, theory,
             Mdec + Cdec, Mrnd + Crnd, Minc + Cinc);
@@ -60,7 +45,6 @@ int main(void) {
 
     for (int s = 0; s < 5; s++) {
         int n = sizes[s];
-        /* Теоретическая оценка: M = nlog2(n) + 6.5n - 4, C = 2nlog2(n) + n + 2 */
         double lg = log2((double)n);
         int Mt = (int)(n * lg + 6.5 * n - 4);
         int Ct = (int)(2.0 * n * lg + n + 2);
@@ -68,9 +52,7 @@ int main(void) {
 
         int arr[n], orig[n];
         int Mdec, Cdec, Mrnd, Crnd, Minc, Cinc;
-        RunSort(n, HeapSort, &Mdec, &Cdec, &Mrnd, &Crnd, &Minc, &Cinc);
 
-        /* Проверка серий после сортировки на убывающем массиве */
         FillDec(n, orig); CopyArray(n, orig, arr); HeapSort(n, arr, &Mdec, &Cdec);
         int runs_dec = CountRuns(n, arr);
 
