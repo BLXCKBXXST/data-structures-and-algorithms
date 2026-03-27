@@ -13,6 +13,7 @@ void ShakerSort(int n, int arr[n], int *M, int *C);
 void InsertSort(int n, int arr[n], int *M, int *C);
 void ShellSort(int ns, int steps[ns], int n, int arr[n], int *M, int *C);
 void HeapSort(int n, int arr[n], int *M, int *C);
+void BuildHeap(int n, int arr[n], int *M, int *C);
 
 /* QuickSort — две версии (различаются выбором опорного элемента).
  * depth — максимальная глубина рекурсии (выходной параметр). */
