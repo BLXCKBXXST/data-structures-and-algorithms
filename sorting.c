@@ -150,6 +150,12 @@ static void SiftDown(int n, int arr[], int i, int *M, int *C) {
     }
 }
 
+void BuildHeap(int n, int arr[n], int *M, int *C) {
+    *M = 0; *C = 0;
+    for (int i = n / 2 - 1; i >= 0; i--)
+        SiftDown(n, arr, i, M, C);
+}
+
 void HeapSort(int n, int arr[n], int *M, int *C) {
     *M = 0; *C = 0;
     /* Построение кучи (фаза 1) */
