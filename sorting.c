@@ -163,6 +163,70 @@ void HeapSort(int n, int arr[n], int *M, int *C) {
     }
 }
 
+/* --- QuickSort --- */
+
+/* Версия 1: опорный элемент — средний (arr[(lo+hi)/2]) */
+static void qs1(int arr[], int lo, int hi, int *M, int *C, int d, int *maxd) {
+    if (d > *maxd) *maxd = d;
+    if (lo >= hi) return;
+    int i = lo, j = hi;
+    int pivot = arr[(lo + hi) / 2];
+    (*M)++;  /* чтение опорного */
+    while (i <= j) {
+        while (1) { (*C)++; if (arr[i] >= pivot) break; i++; }
+        while (1) { (*C)++; if (arr[j] <= pivot) break; j--; }
+        if (i <= j) {
+            int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+            *M += 3;
+            i++; j--;
+        }
+    }
+    if (lo < j)  qs1(arr, lo, j, M, C, d + 1, maxd);
+    if (i < hi)  qs1(arr, i, hi, M, C, d + 1, maxd);
+}
+
+void QuickSort1(int n, int arr[n], int *M, int *C, int *depth) {
+    *M = 0; *C = 0; *depth = 0;
+    if (n > 1) qs1(arr, 0, n - 1, M, C, 1, depth);
+}
+
+/* Версия 2: опорный элемент — медиана из трёх (arr[lo], arr[mid], arr[hi]) */
+static int median3(int arr[], int lo, int hi, int *C) {
+    int mid = (lo + hi) / 2;
+    /* Сортируем три элемента и возвращаем средний */
+    (*C)++;
+    if (arr[lo] > arr[mid]) { int t = arr[lo]; arr[lo] = arr[mid]; arr[mid] = t; }
+    (*C)++;
+    if (arr[lo] > arr[hi])  { int t = arr[lo]; arr[lo] = arr[hi];  arr[hi]  = t; }
+    (*C)++;
+    if (arr[mid] > arr[hi]) { int t = arr[mid]; arr[mid] = arr[hi]; arr[hi]  = t; }
+    return arr[mid];
+}
+
+static void qs2(int arr[], int lo, int hi, int *M, int *C, int d, int *maxd) {
+    if (d > *maxd) *maxd = d;
+    if (lo >= hi) return;
+    int i = lo, j = hi;
+    int pivot = (hi - lo >= 2) ? median3(arr, lo, hi, C) : arr[(lo + hi) / 2];
+    (*M)++;  /* чтение опорного */
+    while (i <= j) {
+        while (1) { (*C)++; if (arr[i] >= pivot) break; i++; }
+        while (1) { (*C)++; if (arr[j] <= pivot) break; j--; }
+        if (i <= j) {
+            int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+            *M += 3;
+            i++; j--;
+        }
+    }
+    if (lo < j)  qs2(arr, lo, j, M, C, d + 1, maxd);
+    if (i < hi)  qs2(arr, i, hi, M, C, d + 1, maxd);
+}
+
+void QuickSort2(int n, int arr[n], int *M, int *C, int *depth) {
+    *M = 0; *C = 0; *depth = 0;
+    if (n > 1) qs2(arr, 0, n - 1, M, C, 1, depth);
+}
+
 void RunSort(int n, void(*sort)(int, int*, int*, int*),
              int *Mdec, int *Cdec,
              int *Mrnd,  int *Crnd,

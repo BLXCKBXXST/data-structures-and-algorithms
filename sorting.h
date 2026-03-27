@@ -14,6 +14,11 @@ void InsertSort(int n, int arr[n], int *M, int *C);
 void ShellSort(int ns, int steps[ns], int n, int arr[n], int *M, int *C);
 void HeapSort(int n, int arr[n], int *M, int *C);
 
+/* QuickSort — две версии (различаются выбором опорного элемента).
+ * depth — максимальная глубина рекурсии (выходной параметр). */
+void QuickSort1(int n, int arr[n], int *M, int *C, int *depth);
+void QuickSort2(int n, int arr[n], int *M, int *C, int *depth);
+
 /* Заполняет dec/rnd/inc массивы и прогоняет sort, возвращает M и C для каждого случая */
 void RunSort(int n, void(*sort)(int, int*, int*, int*),
              int *Mdec, int *Cdec,
