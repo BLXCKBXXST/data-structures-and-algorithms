@@ -5,38 +5,38 @@ SRCS_COMMON = sorting.c
 
 all: select bubble shaker insert shell compare heap bsearch quick struct index
 
-select: main_select.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o select main_select.c $(SRCS_COMMON)
+select: 1_1_select_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o select 1_1_select_sort.c $(SRCS_COMMON)
 
-bubble: main_bubble.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o bubble main_bubble.c $(SRCS_COMMON)
+bubble: 1_2_bubble_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o bubble 1_2_bubble_sort.c $(SRCS_COMMON)
 
-shaker: main_shaker.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o shaker main_shaker.c $(SRCS_COMMON)
+shaker: 1_3_shaker_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o shaker 1_3_shaker_sort.c $(SRCS_COMMON)
 
-insert: main_insert.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o insert main_insert.c $(SRCS_COMMON)
+insert: 1_4_insert_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o insert 1_4_insert_sort.c $(SRCS_COMMON)
 
-shell: main_shell.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o shell main_shell.c $(SRCS_COMMON) -lm
+shell: 1_5_shell_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o shell 1_5_shell_sort.c $(SRCS_COMMON) -lm
 
-compare: main_compare.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o compare main_compare.c $(SRCS_COMMON)
+compare: 1_4_compare_quadratic.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o compare 1_4_compare_quadratic.c $(SRCS_COMMON)
 
-heap: main_heap.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o heap main_heap.c $(SRCS_COMMON) -lm
+heap: 1_9_heap_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o heap 1_9_heap_sort.c $(SRCS_COMMON) -lm
 
-bsearch: main_bsearch.c search.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o bsearch main_bsearch.c search.c $(SRCS_COMMON) -lm
+bsearch: 1_6_binary_search.c search.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o bsearch 1_6_binary_search.c search.c $(SRCS_COMMON) -lm
 
-quick: main_quick.c $(SRCS_COMMON)
-	$(CC) $(CFLAGS) -o quick main_quick.c $(SRCS_COMMON) -lm
+quick: 1_10_quick_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o quick 1_10_quick_sort.c $(SRCS_COMMON) -lm
 
-struct: main_struct.c
-	$(CC) $(CFLAGS) -o struct main_struct.c
+struct: 1_7_struct_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o struct 1_7_struct_sort.c $(SRCS_COMMON) -lm
 
-index: main_index.c
-	$(CC) $(CFLAGS) -o index main_index.c
+index: 1_8_index_sort.c $(SRCS_COMMON)
+	$(CC) $(CFLAGS) -o index 1_8_index_sort.c $(SRCS_COMMON) -lm
 
 clean:
 	rm -f select bubble shaker insert shell compare heap bsearch quick struct index
