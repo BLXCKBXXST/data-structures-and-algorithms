@@ -40,6 +40,12 @@ static int cmp_idx_address(const void *a, const void *b) {
 
 typedef int (*CmpIdxFunc)(const void *, const void *);
 
+/* Заполнение индексного массива через указатели */
+static void fill_index(int *idx, int n) {
+    int *p = idx, val = 0;
+    while (p < idx + n) *p++ = val++;
+}
+
 /* InsertSort для индексного массива с подсчётом M и C */
 static void InsertSortIndex(int idx[], int n, CmpIdxFunc cmp, int *M, int *C) {
     *M = 0; *C = 0;
@@ -154,14 +160,14 @@ int main(void) {
 
     /* Индексный массив 1: по Фамилия → Имя */
     int idx_surname[n];
-    for (int i = 0; i < n; i++) idx_surname[i] = i;
+    fill_index(idx_surname, n);
     InsertSortIndex(idx_surname, n, cmp_idx_surname, &M, &C);
     PrintBookByIndex("Индекс 1: по Фамилия → Имя (возрастание)", book, idx_surname, n);
     printf("  Трудоёмкость сортировки индекса: M = %d, C = %d, M+C = %d\n", M, C, M + C);
 
     /* Индексный массив 2: по Адрес → Фамилия */
     int idx_address[n];
-    for (int i = 0; i < n; i++) idx_address[i] = i;
+    fill_index(idx_address, n);
     InsertSortIndex(idx_address, n, cmp_idx_address, &M, &C);
     PrintBookByIndex("Индекс 2: по Адрес → Фамилия (возрастание)", book, idx_address, n);
     printf("  Трудоёмкость сортировки индекса: M = %d, C = %d, M+C = %d\n", M, C, M + C);
