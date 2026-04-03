@@ -2,6 +2,7 @@
  * Раздел 1.7 — Сортировка массивов структур (телефонный справочник)
  * Структура: Фамилия, Имя, Отчество, Телефон, Адрес
  * Сортировка: InsertSort по составному ключу (не BubbleSort!)
+ * Функция сравнения: Less(a, b) — возвращает 1 если a < b, иначе 0
  * Бонус: двоичный поиск по старшей части ключа
  */
 #include <stdio.h>
@@ -17,25 +18,25 @@ typedef struct {
     char address[64];     /* Адрес */
 } PhoneEntry;
 
-/* Сравнение по составному ключу: Фамилия → Имя (по возрастанию) */
-static int cmp_surname_name(const PhoneEntry *a, const PhoneEntry *b) {
+/* Less по ключу Фамилия → Имя: возвращает 1 если a < b, иначе 0 */
+static int Less_surname_name(const PhoneEntry *a, const PhoneEntry *b) {
     int r = strcmp(a->surname, b->surname);
-    if (r != 0) return r;
-    return strcmp(a->name, b->name);
+    if (r != 0) return r < 0;
+    return strcmp(a->name, b->name) < 0;
 }
 
-/* Сравнение по составному ключу: Адрес → Фамилия (по возрастанию) */
-static int cmp_address_surname(const PhoneEntry *a, const PhoneEntry *b) {
+/* Less по ключу Адрес → Фамилия: возвращает 1 если a < b, иначе 0 */
+static int Less_address_surname(const PhoneEntry *a, const PhoneEntry *b) {
     int r = strcmp(a->address, b->address);
-    if (r != 0) return r;
-    return strcmp(a->surname, b->surname);
+    if (r != 0) return r < 0;
+    return strcmp(a->surname, b->surname) < 0;
 }
 
-/* Указатель на функцию сравнения */
-typedef int (*CmpFunc)(const PhoneEntry *, const PhoneEntry *);
+/* Указатель на функцию Less */
+typedef int (*LessFunc)(const PhoneEntry *, const PhoneEntry *);
 
 /* InsertSort для массива структур с подсчётом M и C */
-static void InsertSortStruct(PhoneEntry arr[], int n, CmpFunc cmp, int *M, int *C) {
+static void InsertSortStruct(PhoneEntry arr[], int n, LessFunc less, int *M, int *C) {
     *M = 0; *C = 0;
     for (int i = 1; i < n; i++) {
         PhoneEntry key = arr[i];
@@ -43,7 +44,7 @@ static void InsertSortStruct(PhoneEntry arr[], int n, CmpFunc cmp, int *M, int *
         int j = i - 1;
         while (j >= 0) {
             (*C)++;
-            if (cmp(&arr[j], &key) > 0) {
+            if (less(&key, &arr[j])) {  /* key < arr[j] → сдвигаем arr[j] вправо */
                 arr[j + 1] = arr[j];
                 (*M)++;
                 j--;
@@ -111,22 +112,21 @@ int main(void) {
     /* Копия для сортировки по ключу 1: Фамилия + Имя */
     PhoneEntry sorted1[n];
     memcpy(sorted1, book, sizeof(book));
-    InsertSortStruct(sorted1, n, cmp_surname_name, &M, &C);
+    InsertSortStruct(sorted1, n, Less_surname_name, &M, &C);
     PrintBook("Отсортировано по: Фамилия → Имя (возрастание)", sorted1, n);
     printf("  Трудоёмкость: M = %d, C = %d, M+C = %d\n", M, C, M + C);
 
     /* Копия для сортировки по ключу 2: Адрес + Фамилия */
     PhoneEntry sorted2[n];
     memcpy(sorted2, book, sizeof(book));
-    InsertSortStruct(sorted2, n, cmp_address_surname, &M, &C);
+    InsertSortStruct(sorted2, n, Less_address_surname, &M, &C);
     PrintBook("Отсортировано по: Адрес → Фамилия (возрастание)", sorted2, n);
     printf("  Трудоёмкость: M = %d, C = %d, M+C = %d\n", M, C, M + C);
 
     /* Сортировка по убыванию (Фамилия + Имя, обратный порядок) */
     PhoneEntry sorted3[n];
     memcpy(sorted3, book, sizeof(book));
-    /* Используем трюк: сортируем, потом разворачиваем */
-    InsertSortStruct(sorted3, n, cmp_surname_name, &M, &C);
+    InsertSortStruct(sorted3, n, Less_surname_name, &M, &C);
     for (int i = 0; i < n / 2; i++) {
         PhoneEntry tmp = sorted3[i];
         sorted3[i] = sorted3[n - 1 - i];
@@ -150,7 +150,7 @@ int main(void) {
 
     printf("\n--- Выводы ---\n");
     printf("1. Сортировка структур InsertSort аналогична сортировке чисел, но сравнение\n");
-    printf("   выполняется по составному ключу (сначала по фамилии, затем по имени).\n");
+    printf("   выполняется через функцию Less(a, b): 1 если a < b, 0 иначе.\n");
     printf("2. При смене ключа сортировки порядок записей меняется полностью.\n");
     printf("3. Двоичный поиск по старшей части ключа (фамилии) работает корректно\n");
     printf("   и находит одну из записей с данной фамилией за O(log n) сравнений.\n");
