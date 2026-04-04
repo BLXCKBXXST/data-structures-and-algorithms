@@ -40,10 +40,20 @@ static int cmp_idx_address(const void *a, const void *b) {
 
 typedef int (*CmpIdxFunc)(const void *, const void *);
 
-/* Заполнение индексного массива через указатели */
-static void fill_index(int *idx, int n) {
-    int *p = idx, val = 0;
-    while (p < idx + n) *p++ = val++;
+/*
+ * Заполнение индексного массива через указатели.
+ *
+ * Указатель src перебирает элементы исходного массива book.
+ * Для каждого элемента вычисляем его порядковый номер как разность
+ * указателей (src - book), и присваиваем это значение через указатель p.
+ * Таким образом указатель получает не просто счётчик val,
+ * а именно позицию конкретного элемента исходного массива.
+ */
+static void fill_index(int *idx, const PhoneEntry *book, int n) {
+    int *p = idx;
+    const PhoneEntry *src = book;
+    while (src < book + n)
+        *p++ = (int)(src++ - book);
 }
 
 /* InsertSort для индексного массива с подсчётом M и C */
@@ -160,14 +170,14 @@ int main(void) {
 
     /* Индексный массив 1: по Фамилия → Имя */
     int idx_surname[n];
-    fill_index(idx_surname, n);
+    fill_index(idx_surname, book, n);
     InsertSortIndex(idx_surname, n, cmp_idx_surname, &M, &C);
     PrintBookByIndex("Индекс 1: по Фамилия → Имя (возрастание)", book, idx_surname, n);
     printf("  Трудоёмкость сортировки индекса: M = %d, C = %d, M+C = %d\n", M, C, M + C);
 
     /* Индексный массив 2: по Адрес → Фамилия */
     int idx_address[n];
-    fill_index(idx_address, n);
+    fill_index(idx_address, book, n);
     InsertSortIndex(idx_address, n, cmp_idx_address, &M, &C);
     PrintBookByIndex("Индекс 2: по Адрес → Фамилия (возрастание)", book, idx_address, n);
     printf("  Трудоёмкость сортировки индекса: M = %d, C = %d, M+C = %d\n", M, C, M + C);
