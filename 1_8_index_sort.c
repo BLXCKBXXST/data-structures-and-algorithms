@@ -17,50 +17,47 @@ typedef struct {
     char address[64];
 } PhoneEntry;
 
-/* Глобальный массив данных (для доступа из функций сравнения) */
-static PhoneEntry *g_book;
-
-/* Сравнение по фамилии → имя через индексы */
-static int cmp_idx_surname(const void *a, const void *b) {
-    int ia = *(const int *)a;
-    int ib = *(const int *)b;
-    int r = strcmp(g_book[ia].surname, g_book[ib].surname);
+/* Сравнение по фамилии → имя через указатели */
+static int cmp_surname(const void *a, const void *b) {
+    const PhoneEntry *pa = *(const PhoneEntry **)a;
+    const PhoneEntry *pb = *(const PhoneEntry **)b;
+    int r = strcmp(pa->surname, pb->surname);
     if (r != 0) return r;
-    return strcmp(g_book[ia].name, g_book[ib].name);
+    return strcmp(pa->name, pb->name);
 }
 
-/* Сравнение по адресу → фамилия через индексы */
-static int cmp_idx_address(const void *a, const void *b) {
-    int ia = *(const int *)a;
-    int ib = *(const int *)b;
-    int r = strcmp(g_book[ia].address, g_book[ib].address);
+/* Сравнение по адресу → фамилия через указатели */
+static int cmp_address(const void *a, const void *b) {
+    const PhoneEntry *pa = *(const PhoneEntry **)a;
+    const PhoneEntry *pb = *(const PhoneEntry **)b;
+    int r = strcmp(pa->address, pb->address);
     if (r != 0) return r;
-    return strcmp(g_book[ia].surname, g_book[ib].surname);
+    return strcmp(pa->surname, pb->surname);
 }
 
-typedef int (*CmpIdxFunc)(const void *, const void *);
+typedef int (*CmpFunc)(const void *, const void *);
 
 /*
  * Заполнение индексного массива через указатели.
  *
- * Указатель src перебирает элементы исходного массива book.
- * Для каждого элемента вычисляем его порядковый номер как разность
- * указателей (src - book), и присваиваем это значение через указатель p.
- * Таким образом указатель получает не просто счётчик val,
- * а именно позицию конкретного элемента исходного массива.
+ * idx — массив указателей PhoneEntry*.
+ * Указатель p пробегает ячейки idx, указатель src —
+ * элементы исходного массива book.
+ * *p получает адрес элемента book[i] — именно это и есть
+ * «присвоить указателю элемент исходного массива».
  */
-static void fill_index(int *idx, const PhoneEntry *book, int n) {
-    int *p = idx;
-    const PhoneEntry *src = book;
+static void fill_index(PhoneEntry **idx, PhoneEntry *book, int n) {
+    PhoneEntry **p   = idx;
+    PhoneEntry  *src = book;
     while (src < book + n)
-        *p++ = (int)(src++ - book);
+        *p++ = src++;
 }
 
-/* InsertSort для индексного массива с подсчётом M и C */
-static void InsertSortIndex(int idx[], int n, CmpIdxFunc cmp, int *M, int *C) {
+/* InsertSort для индексного массива указателей с подсчётом M и C */
+static void InsertSortIndex(PhoneEntry **idx, int n, CmpFunc cmp, int *M, int *C) {
     *M = 0; *C = 0;
     for (int i = 1; i < n; i++) {
-        int key = idx[i];
+        PhoneEntry *key = idx[i];
         (*M)++;
         int j = i - 1;
         while (j >= 0) {
@@ -76,36 +73,14 @@ static void InsertSortIndex(int idx[], int n, CmpIdxFunc cmp, int *M, int *C) {
     }
 }
 
-/* Двоичный поиск по фамилии через индексный массив */
-static int BSearchIdxSurname(PhoneEntry book[], int idx[], int n,
-                             const char *surname, int *C) {
+/* Двоичный поиск по фамилии через индексный массив указателей */
+static int BSearchSurname(PhoneEntry **idx, int n, const char *surname, int *C) {
     *C = 0;
     int lo = 0, hi = n - 1;
     while (lo <= hi) {
         int mid = lo + (hi - lo) / 2;
         (*C)++;
-        int r = strcmp(surname, book[idx[mid]].surname);
-        if (r < 0) {
-            hi = mid - 1;
-        } else if (r > 0) {
-            (*C)++;
-            lo = mid + 1;
-        } else {
-            return mid; /* позиция в индексном массиве */
-        }
-    }
-    return -1;
-}
-
-/* Двоичный поиск по адресу через индексный массив */
-static int BSearchIdxAddress(PhoneEntry book[], int idx[], int n,
-                             const char *address, int *C) {
-    *C = 0;
-    int lo = 0, hi = n - 1;
-    while (lo <= hi) {
-        int mid = lo + (hi - lo) / 2;
-        (*C)++;
-        int r = strcmp(address, book[idx[mid]].address);
+        int r = strcmp(surname, idx[mid]->surname);
         if (r < 0) {
             hi = mid - 1;
         } else if (r > 0) {
@@ -118,19 +93,39 @@ static int BSearchIdxAddress(PhoneEntry book[], int idx[], int n,
     return -1;
 }
 
-/* Вывод справочника по индексу */
-static void PrintBookByIndex(const char *title, PhoneEntry book[], int idx[], int n) {
-    printf("\n%s\n", title);
-    printf("┌────┬─────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────────────┐\n");
-    printf("│  # │ Idx │   Фамилия    │     Имя      │  Отчество    │   Телефон    │        Адрес         │\n");
-    printf("├────┼─────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────────────┤\n");
-    for (int i = 0; i < n; i++) {
-        int k = idx[i];
-        printf("│ %2d │  %2d │ %-12s │ %-12s │ %-12s │ %-12s │ %-20s │\n",
-            i + 1, k, book[k].surname, book[k].name, book[k].patronymic,
-            book[k].phone, book[k].address);
+/* Двоичный поиск по адресу через индексный массив указателей */
+static int BSearchAddress(PhoneEntry **idx, int n, const char *address, int *C) {
+    *C = 0;
+    int lo = 0, hi = n - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        (*C)++;
+        int r = strcmp(address, idx[mid]->address);
+        if (r < 0) {
+            hi = mid - 1;
+        } else if (r > 0) {
+            (*C)++;
+            lo = mid + 1;
+        } else {
+            return mid;
+        }
     }
-    printf("└────┴─────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────────────┘\n");
+    return -1;
+}
+
+/* Вывод справочника через индексный массив указателей */
+static void PrintBookByIndex(const char *title, PhoneEntry **idx, int n) {
+    printf("\n%s\n", title);
+    printf("┌────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────────────┐\n");
+    printf("│  # │   Фамилия    │     Имя      │  Отчество    │   Телефон    │        Адрес         │\n");
+    printf("├────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────────────┤\n");
+    for (int i = 0; i < n; i++) {
+        printf("│ %2d │ %-12s │ %-12s │ %-12s │ %-12s │ %-20s │\n",
+            i + 1,
+            idx[i]->surname, idx[i]->name, idx[i]->patronymic,
+            idx[i]->phone,   idx[i]->address);
+    }
+    printf("└────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────────────┘\n");
 }
 
 /* Вывод исходного справочника */
@@ -160,74 +155,59 @@ int main(void) {
         {"Козлов",   "Алексей", "Игоревич",   "+7-900-888", "ул. Садовая, 15"},
     };
     int n = sizeof(book) / sizeof(book[0]);
-    g_book = book;
     int M, C;
 
     printf("=== Раздел 1.8: Индексация массивов (телефонный справочник) ===\n");
-
-    /* Вывод исходного справочника */
     PrintBook("Исходный справочник:", book, n);
 
     /* Индексный массив 1: по Фамилия → Имя */
-    int idx_surname[n];
+    PhoneEntry *idx_surname[n];
     fill_index(idx_surname, book, n);
-    InsertSortIndex(idx_surname, n, cmp_idx_surname, &M, &C);
-    PrintBookByIndex("Индекс 1: по Фамилия → Имя (возрастание)", book, idx_surname, n);
-    printf("  Трудоёмкость сортировки индекса: M = %d, C = %d, M+C = %d\n", M, C, M + C);
+    InsertSortIndex(idx_surname, n, cmp_surname, &M, &C);
+    PrintBookByIndex("Индекс 1: по Фамилия → Имя (возрастание)", idx_surname, n);
+    printf("  Трудоёмкость: M = %d, C = %d, M+C = %d\n", M, C, M + C);
 
     /* Индексный массив 2: по Адрес → Фамилия */
-    int idx_address[n];
+    PhoneEntry *idx_address[n];
     fill_index(idx_address, book, n);
-    InsertSortIndex(idx_address, n, cmp_idx_address, &M, &C);
-    PrintBookByIndex("Индекс 2: по Адрес → Фамилия (возрастание)", book, idx_address, n);
-    printf("  Трудоёмкость сортировки индекса: M = %d, C = %d, M+C = %d\n", M, C, M + C);
+    InsertSortIndex(idx_address, n, cmp_address, &M, &C);
+    PrintBookByIndex("Индекс 2: по Адрес → Фамилия (возрастание)", idx_address, n);
+    printf("  Трудоёмкость: M = %d, C = %d, M+C = %d\n", M, C, M + C);
 
     /* Проверка: исходный массив не изменился */
     PrintBook("Исходный справочник (не изменился):", book, n);
 
-    /* Показываем содержимое индексных массивов */
-    printf("\nИндексный массив (Фамилия→Имя): ");
-    for (int i = 0; i < n; i++) printf("%d ", idx_surname[i]);
-    printf("\n");
-
-    printf("Индексный массив (Адрес→Фамилия): ");
-    for (int i = 0; i < n; i++) printf("%d ", idx_address[i]);
-    printf("\n");
-
-    /* Бонус: двоичный поиск по двум ключам */
-    printf("\n--- Двоичный поиск по фамилии (через индекс) ---\n");
+    /* Бонус: двоичный поиск */
+    printf("\n--- Двоичный поиск по фамилии ---\n");
     const char *search_surnames[] = {"Иванов", "Петров", "Козлов", "Смирнов"};
     for (int i = 0; i < 4; i++) {
         int Cs;
-        int pos = BSearchIdxSurname(book, idx_surname, n, search_surnames[i], &Cs);
-        if (pos >= 0) {
-            int k = idx_surname[pos];
-            printf("  Поиск \"%s\": найден (запись %d: %s %s), C = %d\n",
-                search_surnames[i], k, book[k].surname, book[k].name, Cs);
-        } else {
+        int pos = BSearchSurname(idx_surname, n, search_surnames[i], &Cs);
+        if (pos >= 0)
+            printf("  Поиск \"%s\": найден (%s %s), C = %d\n",
+                search_surnames[i],
+                idx_surname[pos]->surname, idx_surname[pos]->name, Cs);
+        else
             printf("  Поиск \"%s\": не найден, C = %d\n", search_surnames[i], Cs);
-        }
     }
 
-    printf("\n--- Двоичный поиск по адресу (через индекс) ---\n");
+    printf("\n--- Двоичный поиск по адресу ---\n");
     const char *search_addrs[] = {"ул. Мира, 5", "пр. Победы, 1", "ул. Пушкина, 1"};
     for (int i = 0; i < 3; i++) {
         int Cs;
-        int pos = BSearchIdxAddress(book, idx_address, n, search_addrs[i], &Cs);
-        if (pos >= 0) {
-            int k = idx_address[pos];
-            printf("  Поиск \"%s\": найден (запись %d: %s %s), C = %d\n",
-                search_addrs[i], k, book[k].surname, book[k].name, Cs);
-        } else {
+        int pos = BSearchAddress(idx_address, n, search_addrs[i], &Cs);
+        if (pos >= 0)
+            printf("  Поиск \"%s\": найден (%s %s), C = %d\n",
+                search_addrs[i],
+                idx_address[pos]->surname, idx_address[pos]->name, Cs);
+        else
             printf("  Поиск \"%s\": не найден, C = %d\n", search_addrs[i], Cs);
-        }
     }
 
     printf("\n--- Выводы ---\n");
     printf("1. Индексация позволяет иметь несколько порядков сортировки без копирования записей.\n");
-    printf("2. Исходный массив данных остаётся неизменным — перестановки только в индексном массиве.\n");
-    printf("3. Сортировка индексного массива значительно дешевле, чем сортировка массива структур,\n");
-    printf("   т.к. перемещаются только целые числа (индексы), а не целые записи.\n");
+    printf("2. Исходный массив данных остаётся неизменным — переставляются только указатели в idx.\n");
+    printf("3. Перемещаются указатели (PhoneEntry*), а не сами записи.\n");
     printf("4. Двоичный поиск по индексу работает за O(log n) сравнений.\n");
 
     return 0;
