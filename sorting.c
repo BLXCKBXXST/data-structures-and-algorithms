@@ -129,7 +129,6 @@ void ShellSort(int ns, int steps[ns], int n, int arr[n], int *M, int *C) {
 
 /* --- HeapSort --- */
 
-/* Просеивание элемента i вниз в куче размером n */
 static void SiftDown(int n, int arr[], int i, int *M, int *C) {
     while (1) {
         int largest = i;
@@ -158,10 +157,8 @@ void BuildHeap(int n, int arr[n], int *M, int *C) {
 
 void HeapSort(int n, int arr[n], int *M, int *C) {
     *M = 0; *C = 0;
-    /* Построение кучи (фаза 1) */
     for (int i = n / 2 - 1; i >= 0; i--)
         SiftDown(n, arr, i, M, C);
-    /* Извлечение элементов (фаза 2) */
     for (int end = n - 1; end > 0; end--) {
         int tmp = arr[0]; arr[0] = arr[end]; arr[end] = tmp;
         *M += 3;
@@ -171,13 +168,20 @@ void HeapSort(int n, int arr[n], int *M, int *C) {
 
 /* --- QuickSort --- */
 
-/* Версия 1: опорный элемент — средний (arr[(lo+hi)/2]) */
+/*
+ * Версия 1: опорный = ПЕРВЫЙ элемент arr[lo].
+ * На возрастающем и убывающем массивах первый элемент всегда
+ * минимальный или максимальный → разбивка 0:(n-1) → ХУДШИЙ случай:
+ *   M = 3*(n-1),  C = (n^2 + 5n + 4) / 2
+ * На случайном массиве опорный ≈ медиана → ЛУЧШИЙ случай:
+ *   M = n*log2(n), C = n*log2(n)
+ */
 static void qs1(int arr[], int lo, int hi, int *M, int *C, int d, int *maxd) {
     if (d > *maxd) *maxd = d;
     if (lo >= hi) return;
     int i = lo, j = hi;
-    int pivot = arr[(lo + hi) / 2];
-    (*M)++;  /* чтение опорного */
+    int pivot = arr[lo];   /* опорный = первый элемент */
+    (*M)++;                /* чтение опорного */
     while (i <= j) {
         while (1) { (*C)++; if (arr[i] >= pivot) break; i++; }
         while (1) { (*C)++; if (arr[j] <= pivot) break; j--; }
@@ -187,8 +191,8 @@ static void qs1(int arr[], int lo, int hi, int *M, int *C, int d, int *maxd) {
             i++; j--;
         }
     }
-    if (lo < j)  qs1(arr, lo, j, M, C, d + 1, maxd);
-    if (i < hi)  qs1(arr, i, hi, M, C, d + 1, maxd);
+    if (lo < j)  qs1(arr, lo, j,  M, C, d + 1, maxd);
+    if (i < hi)  qs1(arr, i,  hi, M, C, d + 1, maxd);
 }
 
 void QuickSort1(int n, int arr[n], int *M, int *C, int *depth) {
@@ -196,10 +200,9 @@ void QuickSort1(int n, int arr[n], int *M, int *C, int *depth) {
     if (n > 1) qs1(arr, 0, n - 1, M, C, 1, depth);
 }
 
-/* Версия 2: опорный элемент — медиана из трёх (arr[lo], arr[mid], arr[hi]) */
+/* Версия 2: опорный = медиана из трёх (arr[lo], arr[mid], arr[hi]) */
 static int median3(int arr[], int lo, int hi, int *C) {
     int mid = (lo + hi) / 2;
-    /* Сортируем три элемента и возвращаем средний */
     (*C)++;
     if (arr[lo] > arr[mid]) { int t = arr[lo]; arr[lo] = arr[mid]; arr[mid] = t; }
     (*C)++;
@@ -224,8 +227,8 @@ static void qs2(int arr[], int lo, int hi, int *M, int *C, int d, int *maxd) {
             i++; j--;
         }
     }
-    if (lo < j)  qs2(arr, lo, j, M, C, d + 1, maxd);
-    if (i < hi)  qs2(arr, i, hi, M, C, d + 1, maxd);
+    if (lo < j)  qs2(arr, lo, j,  M, C, d + 1, maxd);
+    if (i < hi)  qs2(arr, i,  hi, M, C, d + 1, maxd);
 }
 
 void QuickSort2(int n, int arr[n], int *M, int *C, int *depth) {
