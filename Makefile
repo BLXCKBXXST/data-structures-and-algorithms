@@ -2,8 +2,9 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O2
 
 SRCS_COMMON = sorting.c
+LIST_COMMON  = list.c
 
-all: select bubble shaker insert shell compare heap bsearch quick struct index
+all: select bubble shaker insert shell compare heap bsearch quick struct index list mergesort digitalsort
 
 select: 1_1_select_sort.c $(SRCS_COMMON)
 	$(CC) $(CFLAGS) -o select 1_1_select_sort.c $(SRCS_COMMON)
@@ -38,8 +39,17 @@ struct: 1_7_struct_sort.c $(SRCS_COMMON)
 index: 1_8_index_sort.c $(SRCS_COMMON)
 	$(CC) $(CFLAGS) -o index 1_8_index_sort.c $(SRCS_COMMON) -lm
 
+list: 2_1_list.c $(LIST_COMMON)
+	$(CC) $(CFLAGS) -o list 2_1_list.c $(LIST_COMMON)
+
+mergesort: 2_2_merge_sort.c $(LIST_COMMON)
+	$(CC) $(CFLAGS) -o mergesort 2_2_merge_sort.c $(LIST_COMMON) -lm
+
+digitalsort: 2_3_digital_sort.c $(LIST_COMMON)
+	$(CC) $(CFLAGS) -o digitalsort 2_3_digital_sort.c $(LIST_COMMON)
+
 clean:
-	rm -f select bubble shaker insert shell compare heap bsearch quick struct index
+	rm -f select bubble shaker insert shell compare heap bsearch quick struct index list mergesort digitalsort
 
 PACK_FILE = project.pack
 PACK_FILES = $(sort $(wildcard *.h *.c) Makefile)
