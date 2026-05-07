@@ -42,10 +42,10 @@ index: 1_8_index_sort.c $(SRCS_COMMON)
 list: 2_1_list.c $(LIST_COMMON)
 	$(CC) $(CFLAGS) -o list 2_1_list.c $(LIST_COMMON)
 
-mergesort: 2_2_merge_sort.c $(LIST_COMMON)
+merge: 2_2_merge_sort.c $(LIST_COMMON)
 	$(CC) $(CFLAGS) -o mergesort 2_2_merge_sort.c $(LIST_COMMON) -lm
 
-digitalsort: 2_3_digital_sort.c $(LIST_COMMON)
+digital: 2_3_digital_sort.c $(LIST_COMMON)
 	$(CC) $(CFLAGS) -o digitalsort 2_3_digital_sort.c $(LIST_COMMON)
 
 clean:
