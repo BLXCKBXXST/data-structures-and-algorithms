@@ -209,7 +209,7 @@ static int MergeSeries(List *A, List *B, List *dst, int *M, int *C) {
         series++;
         int inA = !QueueIsEmpty(A);
         int inB = !QueueIsEmpty(B);
-        int lastA = -1, lastB = -1, has_lastA = 0, has_lastB = 0;
+        int has_lastA = 0, has_lastB = 0;
 
         while (inA || inB) {
             int takeA = 0;
@@ -227,7 +227,7 @@ static int MergeSeries(List *A, List *B, List *dst, int *M, int *C) {
                     inA = 0;
                 else if (!A->head)
                     inA = 0;
-                lastA = val; has_lastA = 1;
+                has_lastA = 1;
             } else {
                 int val = QueueDequeue(B, M);
                 QueueEnqueue(dst, val, M);
@@ -235,7 +235,7 @@ static int MergeSeries(List *A, List *B, List *dst, int *M, int *C) {
                     inB = 0;
                 else if (!B->head)
                     inB = 0;
-                lastB = val; has_lastB = 1;
+                has_lastB = 1;
             }
         }
     }
