@@ -197,55 +197,57 @@ void ListFillRand(List *L, int n) {
 
 /* Слить два блока длиной lenA и lenB из src в dst */
 static void MergeBlocks(List *src, int lenA, int lenB, List *dst, int *M, int *C) {
-    int takenA = 0, takenB = 0;
-    int aFront = 0, bFront = 0;
-    int aVal = 0, bVal = 0;
-    int haveA = 0, haveB = 0;
+    List A, B;
+    ListInit(&A);
+    ListInit(&B);
 
-    while (takenA < lenA || takenB < lenB) {
-        /* загрузить голову A если нужно */
-        if (!haveA && takenA < lenA && !QueueIsEmpty(src)) {
-            aVal  = QueueDequeue(src, M);
-            haveA = 1;
-            (void)aFront;
-        }
-        /* загрузить голову B если нужно */
-        if (!haveB && takenB < lenB && !QueueIsEmpty(src)) {
-            bVal  = QueueDequeue(src, M);
-            haveB = 1;
-            (void)bFront;
-        }
+    /* Считать блок A */
+    for (int i = 0; i < lenA && !QueueIsEmpty(src); i++) {
+        int v = QueueDequeue(src, M);
+        QueueEnqueue(&A, v, M);
+    }
 
+    /* Считать блок B */
+    for (int i = 0; i < lenB && !QueueIsEmpty(src); i++) {
+        int v = QueueDequeue(src, M);
+        QueueEnqueue(&B, v, M);
+    }
+
+    Node *pa = A.head;
+    Node *pb = B.head;
+
+    while (pa || pb) {
         int takeA;
-        if (haveA && haveB) {
+
+        if (pa && pb) {
             (*C)++;
-            takeA = (aVal <= bVal);
+            takeA = (pa->data <= pb->data);
         } else {
-            takeA = haveA;
+            takeA = (pa != NULL);
         }
 
         if (takeA) {
-            QueueEnqueue(dst, aVal, M);
-            haveA = 0;
-            takenA++;
+            QueueEnqueue(dst, pa->data, M);
+            pa = pa->next;
         } else {
-            QueueEnqueue(dst, bVal, M);
-            haveB = 0;
-            takenB++;
+            QueueEnqueue(dst, pb->data, M);
+            pb = pb->next;
         }
     }
-    /* если B исчерпан, но A ещё есть в буфере — вернуть в src не получится;
-       этого не бывает: lenB точно соответствует оставшимся элементам */
-    (void)haveA; (void)haveB;
+
+    ListFree(&A);
+    ListFree(&B);
 }
 
 void ListMergeSort(List *L, int *M, int *C, int *series) {
-    *M = 0; *C = 0;
-    int n = L->size;
-    if (n <= 1) { *series = (n == 1) ? 1 : 0; return; }
+    *M = 0;
+    *C = 0;
 
-    /* Считаем серии до сортировки */
-    *series = ListSeriesCount(L);
+    int n = L->size;
+    if (n <= 1) {
+        *series = (n == 1) ? 1 : 0;
+        return;
+    }
 
     for (int width = 1; width < n; width *= 2) {
         List tmp;
@@ -262,9 +264,12 @@ void ListMergeSort(List *L, int *M, int *C, int *series) {
 
             MergeBlocks(L, lenA, lenB, &tmp, M, C);
         }
+
         *L = tmp;
     }
-    *series = 1;
+
+    /* серии после сортировки */
+    *series = ListSeriesCount(L);
 }
 
 /* ════════════════════════════════════════
