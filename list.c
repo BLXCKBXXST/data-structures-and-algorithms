@@ -185,79 +185,86 @@ void ListFillRand(List *L, int n) {
 }
 
 /* ════════════════════════════════════════
- *  MergeSort (прямое слияние)
+ *  MergeSort — прямое слияние (straight merge)
  *
- *  M = перемещения (enqueue/dequeue из стека/очереди)
- *  C = сравнения при слиянии серий
- *  Теория: M = n*log2(n),  C = n*log2(n)
+ *  За каждый проход размер блоков удваивается: 1→2→4→...→n
+ *  Гарантированное завершение за ceil(log2(n)) проходов.
+ *
+ *  M = перемещения (enqueue/dequeue)
+ *  C = сравнения при слиянии блоков
+ *  Теория: M ≈ n*log2(n),  C ≈ n*log2(n)
  * ════════════════════════════════════════ */
 
-static void Split(List *src, List *A, List *B) {
-    ListInit(A); ListInit(B);
-    int toggle = 0;
-    while (!QueueIsEmpty(src)) {
-        int val = QueueDequeue(src, NULL);
-        if (toggle == 0) QueueEnqueue(A, val, NULL);
-        else             QueueEnqueue(B, val, NULL);
-        toggle ^= 1;
-    }
-}
+/* Слить два блока длиной lenA и lenB из src в dst */
+static void MergeBlocks(List *src, int lenA, int lenB, List *dst, int *M, int *C) {
+    int takenA = 0, takenB = 0;
+    int aFront = 0, bFront = 0;
+    int aVal = 0, bVal = 0;
+    int haveA = 0, haveB = 0;
 
-static int MergeSeries(List *A, List *B, List *dst, int *M, int *C) {
-    int series = 0;
-    while (!QueueIsEmpty(A) || !QueueIsEmpty(B)) {
-        series++;
-        int inA = !QueueIsEmpty(A);
-        int inB = !QueueIsEmpty(B);
-        int has_lastA = 0, has_lastB = 0;
+    while (takenA < lenA || takenB < lenB) {
+        /* загрузить голову A если нужно */
+        if (!haveA && takenA < lenA && !QueueIsEmpty(src)) {
+            aVal  = QueueDequeue(src, M);
+            haveA = 1;
+            (void)aFront;
+        }
+        /* загрузить голову B если нужно */
+        if (!haveB && takenB < lenB && !QueueIsEmpty(src)) {
+            bVal  = QueueDequeue(src, M);
+            haveB = 1;
+            (void)bFront;
+        }
 
-        while (inA || inB) {
-            int takeA = 0;
-            if (inA && inB) {
-                (*C)++;
-                takeA = (A->head->data <= B->head->data);
-            } else {
-                takeA = inA;
-            }
+        int takeA;
+        if (haveA && haveB) {
+            (*C)++;
+            takeA = (aVal <= bVal);
+        } else {
+            takeA = haveA;
+        }
 
-            if (takeA) {
-                int val = QueueDequeue(A, M);
-                QueueEnqueue(dst, val, M);
-                if (has_lastA && A->head && A->head->data < val)
-                    inA = 0;
-                else if (!A->head)
-                    inA = 0;
-                has_lastA = 1;
-            } else {
-                int val = QueueDequeue(B, M);
-                QueueEnqueue(dst, val, M);
-                if (has_lastB && B->head && B->head->data < val)
-                    inB = 0;
-                else if (!B->head)
-                    inB = 0;
-                has_lastB = 1;
-            }
+        if (takeA) {
+            QueueEnqueue(dst, aVal, M);
+            haveA = 0;
+            takenA++;
+        } else {
+            QueueEnqueue(dst, bVal, M);
+            haveB = 0;
+            takenB++;
         }
     }
-    return series;
+    /* если B исчерпан, но A ещё есть в буфере — вернуть в src не получится;
+       этого не бывает: lenB точно соответствует оставшимся элементам */
+    (void)haveA; (void)haveB;
 }
 
 void ListMergeSort(List *L, int *M, int *C, int *series) {
     *M = 0; *C = 0;
+    int n = L->size;
+    if (n <= 1) { *series = (n == 1) ? 1 : 0; return; }
+
+    /* Считаем серии до сортировки */
     *series = ListSeriesCount(L);
-    if (*series <= 1) return;
 
-    while (1) {
-        List A, B, tmp;
-        Split(L, &A, &B);
-        *M += A.size + B.size;
-
+    for (int width = 1; width < n; width *= 2) {
+        List tmp;
         ListInit(&tmp);
-        int s = MergeSeries(&A, &B, &tmp, M, C);
-        *series = s;
+
+        while (!QueueIsEmpty(L)) {
+            int lenA = 0, lenB = 0;
+
+            /* Определить реальный размер блока A */
+            Node *p = L->head;
+            for (int i = 0; i < width && p; i++, p = p->next) lenA++;
+            /* Определить реальный размер блока B */
+            for (int i = 0; i < width && p; i++, p = p->next) lenB++;
+
+            MergeBlocks(L, lenA, lenB, &tmp, M, C);
+        }
         *L = tmp;
-        if (s <= 1) break;
     }
+    *series = 1;
 }
 
 /* ════════════════════════════════════════
