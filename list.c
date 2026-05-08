@@ -190,58 +190,54 @@ void ListFillRand(List *L, int n) {
  *  За каждый проход размер блоков удваивается: 1→2→4→...→n
  *  Гарантированное завершение за ceil(log2(n)) проходов.
  *
- *  M = пересылки (одна логическая операция переноса элемента)
+ *  M = пересылки: каждый (*M)++ = одна запись элемента в tmp
  *  C = сравнения при слиянии блоков
  *  Теория: M ≈ n*log2(n),  C ≈ n*log2(n)
  * ════════════════════════════════════════ */
 
-/* Слить два блока длиной lenA и lenB из src в dst.
- * Счётчик M: каждый (*M)++ = одна логическая пересылка элемента.
- * QueueDequeue/QueueEnqueue вызываются с NULL — не трогают счётчик. */
-static void MergeBlocks(List *src, int lenA, int lenB, List *dst, int *M, int *C) {
-    List A, B;
-    ListInit(&A);
-    ListInit(&B);
+/*
+ * MergeBlocks: слияет два подряд идущих узлов из L в dst.
+ * pa указывает на начало блока A, pb — на начало блока B.
+ * lenA, lenB — длины блоков.
+ * Узлы L разрываются (переставляются next) — после вызова L должен быть обновлён.
+ * M считает только запись элемента в dst (= n за один вызов).
+ */
+static Node *MergeBlocks(Node *pa, int lenA, Node *pb, int lenB,
+                         List *dst, int *M, int *C) {
+    int ia = 0, ib = 0;
 
-    /* Считать блок A — одна пересылка src -> A на элемент */
-    for (int i = 0; i < lenA && !QueueIsEmpty(src); i++) {
-        int v = QueueDequeue(src, NULL);
-        QueueEnqueue(&A, v, NULL);
-        (*M)++;
-    }
-
-    /* Считать блок B — одна пересылка src -> B на элемент */
-    for (int i = 0; i < lenB && !QueueIsEmpty(src); i++) {
-        int v = QueueDequeue(src, NULL);
-        QueueEnqueue(&B, v, NULL);
-        (*M)++;
-    }
-
-    Node *pa = A.head;
-    Node *pb = B.head;
-
-    while (pa || pb) {
+    while (ia < lenA || ib < lenB) {
         int takeA;
 
-        if (pa && pb) {
+        if (ia < lenA && ib < lenB) {
             (*C)++;
             takeA = (pa->data <= pb->data);
         } else {
-            takeA = (pa != NULL);
+            takeA = (ia < lenA);
         }
 
+        Node *chosen;
         if (takeA) {
-            QueueEnqueue(dst, pa->data, NULL);
+            chosen = pa;
             pa = pa->next;
+            ia++;
         } else {
-            QueueEnqueue(dst, pb->data, NULL);
+            chosen = pb;
             pb = pb->next;
+            ib++;
         }
-        (*M)++;  /* одна пересылка A/B -> dst */
+
+        /* присоединить узел в dst без malloc */
+        chosen->next = NULL;
+        if (dst->tail) dst->tail->next = chosen;
+        else           dst->head       = chosen;
+        dst->tail = chosen;
+        dst->size++;
+        (*M)++;  /* одна пересылка: узел перешёл в dst */
     }
 
-    ListFree(&A);
-    ListFree(&B);
+    /* возвращаем указатель на первый узел после блока B (для следующего вызова) */
+    return pb;
 }
 
 void ListMergeSort(List *L, int *M, int *C, int *series) {
@@ -258,22 +254,29 @@ void ListMergeSort(List *L, int *M, int *C, int *series) {
         List tmp;
         ListInit(&tmp);
 
-        while (!QueueIsEmpty(L)) {
-            int lenA = 0, lenB = 0;
+        Node *cur = L->head;
 
-            /* Определить реальный размер блока A */
-            Node *p = L->head;
-            for (int i = 0; i < width && p; i++, p = p->next) lenA++;
-            /* Определить реальный размер блока B */
-            for (int i = 0; i < width && p; i++, p = p->next) lenB++;
+        while (cur) {
+            /* найти начало блока A и его реальную длину */
+            Node *pa = cur;
+            int lenA = 0;
+            for (int i = 0; i < width && cur; i++, cur = cur->next) lenA++;
 
-            MergeBlocks(L, lenA, lenB, &tmp, M, C);
+            /* найти начало блока B и его реальную длину */
+            Node *pb = cur;
+            int lenB = 0;
+            for (int i = 0; i < width && cur; i++, cur = cur->next) lenB++;
+
+            /* слить два блока в tmp, переставляя узлы */
+            MergeBlocks(pa, lenA, pb, lenB, &tmp, M, C);
         }
 
-        *L = tmp;
+        /* L целиком перешёл в tmp, сбросить старый заголовок без free */
+        L->head = tmp.head;
+        L->tail = tmp.tail;
+        L->size = tmp.size;
     }
 
-    /* серии после сортировки */
     *series = ListSeriesCount(L);
 }
 
@@ -297,7 +300,6 @@ static void RadixPassSigned(List *L, int byte_pos, int total_bytes, int *M) {
     }
 
     if (byte_pos == total_bytes - 1) {
-        /* Знаковый старший байт: сначала 128-255 (отрицательные), потом 0-127 */
         for (int i = 128; i < RADIX; i++)
             while (!QueueIsEmpty(&buckets[i]))
                 QueueEnqueue(L, QueueDequeue(&buckets[i], M), M);
