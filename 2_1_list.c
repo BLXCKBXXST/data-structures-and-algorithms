@@ -5,6 +5,26 @@
 
 #define DEMO_N 10
 
+/* Вывод операций 2.1.3 + 5* для одного списка */
+static void DemoListOps(const char *label, const List *L) {
+    printf("── %s", label);
+    printf("\n  Список:            "); ListPrint(L);
+    printf("  Контрольная сумма: %lld\n", ListChecksum(L));
+    printf("  Количество серий:  %d\n",   ListSeriesCount(L));
+    printf("  Прямой порядок:    "); ListPrint(L);
+    printf("  Обратный порядок:  "); ListPrintRev(L);
+    printf("\n");
+}
+
+/* Вывод 2.1.4* для одного списка: до и после ListFree */
+static void DemoListFree(const char *label, List *L) {
+    printf("── %s\n", label);
+    printf("  До очистки  (размер=%d): ", L->size); ListPrint(L);
+    ListFree(L);
+    printf("  После очистки (размер=%d): %s\n\n",
+           L->size, L->head == NULL ? "(пусто)" : "???");
+}
+
 int main(void) {
     srand(time(NULL));
 
@@ -15,19 +35,20 @@ int main(void) {
     printf("║         2.1.1 — Стек                     ║\n");
     printf("╚══════════════════════════════════════════╝\n");
 
-    List S; int M;
+    List S_inc, S_dec, S_rnd;
+    int M;
 
-    ListInit(&S); M = 0;
-    StackFillInc(&S, DEMO_N, &M);
-    printf("Стек (возр., M=%d): ", M); ListPrint(&S); ListFree(&S);
+    ListInit(&S_inc); M = 0;
+    StackFillInc(&S_inc, DEMO_N, &M);
+    printf("Стек (возр., M=%d): ", M); ListPrint(&S_inc);
 
-    ListInit(&S); M = 0;
-    StackFillDec(&S, DEMO_N, &M);
-    printf("Стек (убыв., M=%d): ", M); ListPrint(&S); ListFree(&S);
+    ListInit(&S_dec); M = 0;
+    StackFillDec(&S_dec, DEMO_N, &M);
+    printf("Стек (убыв., M=%d): ", M); ListPrint(&S_dec);
 
-    ListInit(&S); M = 0;
-    StackFillRand(&S, DEMO_N, &M);
-    printf("Стек (случ., M=%d): ", M); ListPrint(&S); ListFree(&S);
+    ListInit(&S_rnd); M = 0;
+    StackFillRand(&S_rnd, DEMO_N, &M);
+    printf("Стек (случ., M=%d): ", M); ListPrint(&S_rnd);
 
     /* ══════════════════════════════════════════
      * 2.1.2 — Очередь: три варианта заполнения
@@ -36,48 +57,49 @@ int main(void) {
     printf("║         2.1.2 — Очередь                  ║\n");
     printf("╚══════════════════════════════════════════╝\n");
 
-    List Q;
+    List Q_inc, Q_dec, Q_rnd;
 
-    ListInit(&Q); M = 0;
-    QueueFillInc(&Q, DEMO_N, &M);
-    printf("Очередь (возр., M=%d): ", M); ListPrint(&Q); ListFree(&Q);
+    ListInit(&Q_inc); M = 0;
+    QueueFillInc(&Q_inc, DEMO_N, &M);
+    printf("Очередь (возр., M=%d): ", M); ListPrint(&Q_inc);
 
-    ListInit(&Q); M = 0;
-    QueueFillDec(&Q, DEMO_N, &M);
-    printf("Очередь (убыв., M=%d): ", M); ListPrint(&Q); ListFree(&Q);
+    ListInit(&Q_dec); M = 0;
+    QueueFillDec(&Q_dec, DEMO_N, &M);
+    printf("Очередь (убыв., M=%d): ", M); ListPrint(&Q_dec);
 
-    ListInit(&Q); M = 0;
-    QueueFillRand(&Q, DEMO_N, &M);
-    printf("Очередь (случ., M=%d): ", M); ListPrint(&Q); ListFree(&Q);
+    ListInit(&Q_rnd); M = 0;
+    QueueFillRand(&Q_rnd, DEMO_N, &M);
+    printf("Очередь (случ., M=%d): ", M); ListPrint(&Q_rnd);
+
+    /* ══════════════════════════════════════════════════════════
+     * 2.1.3 + 5* — Работа со списком: те же данные из 2.1.1/2.1.2
+     *   печать, контрольная сумма, серии,
+     *   рекурсивная печать прямо и обратно (5*)
+     * ══════════════════════════════════════════════════════════ */
+    printf("\n╔══════════════════════════════════════════════════════════╗\n");
+    printf("║  2.1.3 + 5* — Работа со списком                         ║\n");
+    printf("╚══════════════════════════════════════════════════════════╝\n\n");
+
+    DemoListOps("Стек возрастающий",  &S_inc);
+    DemoListOps("Стек убывающий",     &S_dec);
+    DemoListOps("Стек случайный",     &S_rnd);
+    DemoListOps("Очередь возрастающая", &Q_inc);
+    DemoListOps("Очередь убывающая",    &Q_dec);
+    DemoListOps("Очередь случайная",    &Q_rnd);
 
     /* ══════════════════════════════════════════
-     * 2.1.3 — Работа со списком
+     * 2.1.4* — Очистка: показать до и после
      * ══════════════════════════════════════════ */
-    printf("\n╔══════════════════════════════════════════╗\n");
-    printf("║         2.1.3 — Список                   ║\n");
-    printf("╚══════════════════════════════════════════╝\n");
+    printf("╔══════════════════════════════════════════╗\n");
+    printf("║         2.1.4* — Очистка списков         ║\n");
+    printf("╚══════════════════════════════════════════╝\n\n");
 
-    List L; ListInit(&L);
-    QueueFillRand(&L, DEMO_N, NULL);
-
-    printf("Список: "); ListPrint(&L);
-    printf("Контрольная сумма: %lld\n", ListChecksum(&L));
-    printf("Количество серий:  %d\n",   ListSeriesCount(&L));
-
-    /* 5*: рекурсивная печать */
-    printf("\n╔══════════════════════════════════════════╗\n");
-    printf("║   2.1.5* — Рекурсивная печать            ║\n");
-    printf("╚══════════════════════════════════════════╝\n");
-    printf("Прямой порядок:   "); ListPrint(&L);
-    printf("Обратный порядок: "); ListPrintRev(&L);
-
-    /* 4*: удаление всех элементов */
-    printf("\n╔══════════════════════════════════════════╗\n");
-    printf("║   2.1.4* — Очистка списка                ║\n");
-    printf("╚══════════════════════════════════════════╝\n");
-    ListFree(&L);
-    printf("Размер после очистки: %d\n", L.size);
-    printf("Список пуст: %s\n", L.head == NULL ? "да" : "нет");
+    DemoListFree("Стек возрастающий",    &S_inc);
+    DemoListFree("Стек убывающий",       &S_dec);
+    DemoListFree("Стек случайный",       &S_rnd);
+    DemoListFree("Очередь возрастающая", &Q_inc);
+    DemoListFree("Очередь убывающая",    &Q_dec);
+    DemoListFree("Очередь случайная",    &Q_rnd);
 
     return 0;
 }
