@@ -190,27 +190,31 @@ void ListFillRand(List *L, int n) {
  *  За каждый проход размер блоков удваивается: 1→2→4→...→n
  *  Гарантированное завершение за ceil(log2(n)) проходов.
  *
- *  M = перемещения (enqueue/dequeue)
+ *  M = пересылки (одна логическая операция переноса элемента)
  *  C = сравнения при слиянии блоков
  *  Теория: M ≈ n*log2(n),  C ≈ n*log2(n)
  * ════════════════════════════════════════ */
 
-/* Слить два блока длиной lenA и lenB из src в dst */
+/* Слить два блока длиной lenA и lenB из src в dst.
+ * Счётчик M: каждый (*M)++ = одна логическая пересылка элемента.
+ * QueueDequeue/QueueEnqueue вызываются с NULL — не трогают счётчик. */
 static void MergeBlocks(List *src, int lenA, int lenB, List *dst, int *M, int *C) {
     List A, B;
     ListInit(&A);
     ListInit(&B);
 
-    /* Считать блок A */
+    /* Считать блок A — одна пересылка src -> A на элемент */
     for (int i = 0; i < lenA && !QueueIsEmpty(src); i++) {
-        int v = QueueDequeue(src, M);
-        QueueEnqueue(&A, v, M);
+        int v = QueueDequeue(src, NULL);
+        QueueEnqueue(&A, v, NULL);
+        (*M)++;
     }
 
-    /* Считать блок B */
+    /* Считать блок B — одна пересылка src -> B на элемент */
     for (int i = 0; i < lenB && !QueueIsEmpty(src); i++) {
-        int v = QueueDequeue(src, M);
-        QueueEnqueue(&B, v, M);
+        int v = QueueDequeue(src, NULL);
+        QueueEnqueue(&B, v, NULL);
+        (*M)++;
     }
 
     Node *pa = A.head;
@@ -227,12 +231,13 @@ static void MergeBlocks(List *src, int lenA, int lenB, List *dst, int *M, int *C
         }
 
         if (takeA) {
-            QueueEnqueue(dst, pa->data, M);
+            QueueEnqueue(dst, pa->data, NULL);
             pa = pa->next;
         } else {
-            QueueEnqueue(dst, pb->data, M);
+            QueueEnqueue(dst, pb->data, NULL);
             pb = pb->next;
         }
+        (*M)++;  /* одна пересылка A/B -> dst */
     }
 
     ListFree(&A);
