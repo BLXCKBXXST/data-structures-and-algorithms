@@ -88,7 +88,6 @@ static void PrintRevRec(const Node *p) {
     printf("%d ", p->data);
 }
 
-/* 5*: рекурсивная печать в обратном порядке */
 void ListPrintRev(const List *L) {
     PrintRevRec(L->head);
     printf("\n");
@@ -109,7 +108,6 @@ int ListSeriesCount(const List *L) {
     return count;
 }
 
-/* 4*: удалить все элементы */
 void ListFree(List *L) {
     Node *p = L->head;
     while (p) {
@@ -187,17 +185,18 @@ void ListFillRand(List *L, int n) {
 /* ════════════════════════════════════════
  *  MergeSort — прямое слияние (straight merge)
  *
- *  За каждый проход размер блоков удваивается: 1→2→4→...→n
- *  Гарантированное завершение за ceil(log2(n)) проходов.
+ *  M = пересылки: каждый узел, переставленный в dst → (*M)++
+ *  C = сравнения: только когда ОБА блока ещё не исчерпаны
+ *                 (хвост без соперника — не сравнение)
  *
- *  M = пересылки: каждый (*M)++ = одна запись элемента в tmp
- *  C = сравнения при слиянии блоков
- *
- *  Счёт по модели «одно сравнение на каждый выбранный узел»:
- *    - оба блока живы  → сравниваем pa->data и pb->data
- *    - один блок исчерпан → сравниваем индекс с длиной (ia<lenA / ib<lenB)
- *  Итого за слияние lenA+lenB элементов: ровно lenA+lenB сравнений = lenA+lenB пересылок
- *  → M ≈ C ≈ n·log2(n)  для всех вариантов входа
+ *  Итог:
+ *    M = n * ceil(log2(n))  — всегда точно
+ *    C < M, зависит от данных:
+ *      убывающий  → C минимально (много «быстрых» хвостов)
+ *      случайный  → C среднее
+ *      возрастающий → C ≈ n/2 * ceil(log2(n)) (каждый раз один блок
+ *                     сразу «выигрывает» подряд до конца)
+ *  Теория из таблицы: M ≈ C ≈ n*log2(n) — асимптотически верно
  * ════════════════════════════════════════ */
 
 static Node *MergeBlocks(Node *pa, int lenA, Node *pb, int lenB,
@@ -205,13 +204,14 @@ static Node *MergeBlocks(Node *pa, int lenA, Node *pb, int lenB,
     int ia = 0, ib = 0;
 
     while (ia < lenA || ib < lenB) {
-        (*C)++;   /* одно сравнение на каждый выбор узла */
-
         int takeA;
-        if (ia < lenA && ib < lenB)
+
+        if (ia < lenA && ib < lenB) {
+            (*C)++;                            /* реальное сравнение двух элементов */
             takeA = (pa->data <= pb->data);
-        else
-            takeA = (ia < lenA);
+        } else {
+            takeA = (ia < lenA);               /* хвост — сравнения нет */
+        }
 
         Node *chosen;
         if (takeA) {
@@ -229,7 +229,7 @@ static Node *MergeBlocks(Node *pa, int lenA, Node *pb, int lenB,
         else           dst->head       = chosen;
         dst->tail = chosen;
         dst->size++;
-        (*M)++;   /* одна пересылка: узел перешёл в dst */
+        (*M)++;                                /* одна пересылка узла в dst */
     }
 
     return pb;
@@ -273,8 +273,6 @@ void ListMergeSort(List *L, int *M, int *C, int *series) {
 
 /* ════════════════════════════════════════
  *  DigitalSort (LSD Radix Sort, база 256)
- *  M = const * n  (сравнений нет)
- *  Константа = кол-во байт * 2 (dequeue + enqueue за проход)
  * ════════════════════════════════════════ */
 
 #define RADIX 256
