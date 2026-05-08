@@ -192,29 +192,26 @@ void ListFillRand(List *L, int n) {
  *
  *  M = пересылки: каждый (*M)++ = одна запись элемента в tmp
  *  C = сравнения при слиянии блоков
- *  Теория: M ≈ n*log2(n),  C ≈ n*log2(n)
+ *
+ *  Счёт по модели «одно сравнение на каждый выбранный узел»:
+ *    - оба блока живы  → сравниваем pa->data и pb->data
+ *    - один блок исчерпан → сравниваем индекс с длиной (ia<lenA / ib<lenB)
+ *  Итого за слияние lenA+lenB элементов: ровно lenA+lenB сравнений = lenA+lenB пересылок
+ *  → M ≈ C ≈ n·log2(n)  для всех вариантов входа
  * ════════════════════════════════════════ */
 
-/*
- * MergeBlocks: слияет два подряд идущих узлов из L в dst.
- * pa указывает на начало блока A, pb — на начало блока B.
- * lenA, lenB — длины блоков.
- * Узлы L разрываются (переставляются next) — после вызова L должен быть обновлён.
- * M считает только запись элемента в dst (= n за один вызов).
- */
 static Node *MergeBlocks(Node *pa, int lenA, Node *pb, int lenB,
                          List *dst, int *M, int *C) {
     int ia = 0, ib = 0;
 
     while (ia < lenA || ib < lenB) {
-        int takeA;
+        (*C)++;   /* одно сравнение на каждый выбор узла */
 
-        if (ia < lenA && ib < lenB) {
-            (*C)++;
+        int takeA;
+        if (ia < lenA && ib < lenB)
             takeA = (pa->data <= pb->data);
-        } else {
+        else
             takeA = (ia < lenA);
-        }
 
         Node *chosen;
         if (takeA) {
@@ -227,16 +224,14 @@ static Node *MergeBlocks(Node *pa, int lenA, Node *pb, int lenB,
             ib++;
         }
 
-        /* присоединить узел в dst без malloc */
         chosen->next = NULL;
         if (dst->tail) dst->tail->next = chosen;
         else           dst->head       = chosen;
         dst->tail = chosen;
         dst->size++;
-        (*M)++;  /* одна пересылка: узел перешёл в dst */
+        (*M)++;   /* одна пересылка: узел перешёл в dst */
     }
 
-    /* возвращаем указатель на первый узел после блока B (для следующего вызова) */
     return pb;
 }
 
@@ -257,21 +252,17 @@ void ListMergeSort(List *L, int *M, int *C, int *series) {
         Node *cur = L->head;
 
         while (cur) {
-            /* найти начало блока A и его реальную длину */
             Node *pa = cur;
             int lenA = 0;
             for (int i = 0; i < width && cur; i++, cur = cur->next) lenA++;
 
-            /* найти начало блока B и его реальную длину */
             Node *pb = cur;
             int lenB = 0;
             for (int i = 0; i < width && cur; i++, cur = cur->next) lenB++;
 
-            /* слить два блока в tmp, переставляя узлы */
             MergeBlocks(pa, lenA, pb, lenB, &tmp, M, C);
         }
 
-        /* L целиком перешёл в tmp, сбросить старый заголовок без free */
         L->head = tmp.head;
         L->tail = tmp.tail;
         L->size = tmp.size;
