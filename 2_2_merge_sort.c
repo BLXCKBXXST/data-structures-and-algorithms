@@ -64,9 +64,7 @@ int main(void) {
 
     /* ══════════════════════════════════════════
      * 2.2.4-5 — Трудоёмкость MergeSort
-     * Теория: M = n*ceil(log2(n)),  C = n*ceil(log2(n))
-     * ceil потому что прямое слияние делает ровно ceil(log2(n)) проходов,
-     * на каждом из которых ровно n пересылок и не более n сравнений.
+     * Теория (из таблицы трудоёмкости): M = n*log2(n), C = n*log2(n)
      * ══════════════════════════════════════════ */
     printf("\n╔══════════════════════════════════════════════════════════════════════════════════════════╗\n");
     printf("║               2.2.4-5 — Трудоёмкость MergeSort                                        ║\n");
@@ -88,9 +86,8 @@ int main(void) {
         ListInit(&L); ListFillInc(&L, n);
         ListMergeSort(&L, &Mi, &Ci, &ser); ListFree(&L);
 
-        int passes = (int)ceil(log2((double)n));
-        int Mt = n * passes;
-        int Ct = n * passes;
+        int Mt = (int)round(n * log2((double)n));
+        int Ct = (int)round(n * log2((double)n));
         printf("║ %4d ║ %8d ║ %8d ║ %8d ║ %8d ║ %8d ║ %8d ║ %8d ║ %8d ║\n",
                n, Mt, Ct, Md, Cd, Mr, Cr, Mi, Ci);
     }
@@ -116,8 +113,7 @@ int main(void) {
         ListInit(&L); ListFillInc(&L, n);
         ListMergeSort(&L, &Mi, &Ci, &ser); ListFree(&L);
 
-        int passes = (int)ceil(log2((double)n));
-        int theory = 2 * n * passes;
+        int theory = 2 * (int)round(n * log2((double)n));
         printf("║ %4d ║ %13d ║ %11d ║ %11d ║ %8d ║\n",
                n, theory, Md+Cd, Mr+Cr, Mi+Ci);
     }
