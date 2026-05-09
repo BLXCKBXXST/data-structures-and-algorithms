@@ -43,13 +43,13 @@ list: 2_1_list.c $(LIST_COMMON)
 	$(CC) $(CFLAGS) -o list 2_1_list.c $(LIST_COMMON)
 
 merge: 2_2_merge_sort.c $(LIST_COMMON)
-	$(CC) $(CFLAGS) -o mergesort 2_2_merge_sort.c $(LIST_COMMON) -lm
+	$(CC) $(CFLAGS) -o merge 2_2_merge_sort.c $(LIST_COMMON) -lm
 
 digital: 2_3_digital_sort.c $(LIST_COMMON)
-	$(CC) $(CFLAGS) -o digitalsort 2_3_digital_sort.c $(LIST_COMMON)
+	$(CC) $(CFLAGS) -o digital 2_3_digital_sort.c $(LIST_COMMON)
 
 clean:
-	rm -f select bubble shaker insert shell compare heap bsearch quick struct index list mergesort digitalsort
+	rm -f select bubble shaker insert shell compare heap bsearch quick struct index list merge digital
 
 PACK_FILE = project.pack
 PACK_FILES = $(sort $(wildcard *.h *.c) Makefile)
