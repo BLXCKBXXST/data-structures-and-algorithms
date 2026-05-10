@@ -62,4 +62,26 @@ void ListDigitalSort16D(List *L, int *M);   /* int16_t, по убыванию   
 void ListDigitalSort32 (List *L, int *M);   /* int32_t, по возрастанию */
 void ListDigitalSort32D(List *L, int *M);   /* int32_t, по убыванию    */
 
+/* ─── Список строк (для DigitalSort фамилий, 2.3.6*) ─── */
+typedef struct StrNode {
+    char            *data;
+    struct StrNode  *next;
+} StrNode;
+
+typedef struct {
+    StrNode *head;
+    StrNode *tail;
+    int      size;
+} StrList;
+
+void StrListInit  (StrList *L);
+void StrListFree  (StrList *L);
+void StrListAppend(StrList *L, const char *s);   /* enqueue (копия строки) */
+void StrListPrint (const StrList *L);
+
+/* DigitalSort строк (LSD по байтам справа налево):
+ *   asc=1 — по возрастанию, asc=0 — по убыванию
+ *   все строки приводятся к фиксированной длине = max длине + дополняются 0 справа */
+void StrListDigitalSort(StrList *L, int asc, int *M);
+
 #endif /* LIST_H */

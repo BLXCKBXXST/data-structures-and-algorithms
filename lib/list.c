@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "list.h"
 
 /* ════════════════════════════════════════
@@ -395,4 +396,102 @@ void ListDigitalSort32(List *L, int *M) {
 void ListDigitalSort32D(List *L, int *M) {
     ListDigitalSort32(L, M);
     ReverseList(L);
+}
+
+/* ════════════════════════════════════════
+ *  StrList — список строк (для 2.3.6*)
+ * ════════════════════════════════════════ */
+
+void StrListInit(StrList *L) {
+    L->head = L->tail = NULL;
+    L->size = 0;
+}
+
+void StrListFree(StrList *L) {
+    StrNode *p = L->head;
+    while (p) {
+        StrNode *t = p->next;
+        free(p->data);
+        free(p);
+        p = t;
+    }
+    L->head = L->tail = NULL;
+    L->size = 0;
+}
+
+void StrListAppend(StrList *L, const char *s) {
+    StrNode *n = malloc(sizeof(StrNode));
+    if (!n) { fprintf(stderr, "malloc failed\n"); exit(1); }
+    n->data = strdup(s);
+    if (!n->data) { fprintf(stderr, "strdup failed\n"); exit(1); }
+    n->next = NULL;
+    if (L->tail) L->tail->next = n;
+    else         L->head       = n;
+    L->tail = n;
+    L->size++;
+}
+
+void StrListPrint(const StrList *L) {
+    for (StrNode *p = L->head; p; p = p->next)
+        printf("%s ", p->data);
+    printf("\n");
+}
+
+/* DigitalSort строк по байтам справа налево.
+ * Все строки дополняются 0-байтами справа до max длины.
+ * asc=1 — по возрастанию (стандартный LSD); asc=0 — реверс в конце. */
+void StrListDigitalSort(StrList *L, int asc, int *M) {
+    *M = 0;
+    int n = L->size;
+    if (n <= 1) return;
+
+    /* Найти max длину */
+    int maxlen = 0;
+    for (StrNode *p = L->head; p; p = p->next) {
+        int len = (int)strlen(p->data);
+        if (len > maxlen) maxlen = len;
+    }
+
+    /* LSD-радикс по байтам с позиции maxlen-1 до 0 */
+    for (int pos = maxlen - 1; pos >= 0; pos--) {
+        StrList buckets[256];
+        for (int i = 0; i < 256; i++) StrListInit(&buckets[i]);
+
+        StrNode *p = L->head;
+        while (p) {
+            StrNode *next = p->next;
+            int len = (int)strlen(p->data);
+            int b = (pos < len) ? (unsigned char)p->data[pos] : 0;
+            p->next = NULL;
+            if (buckets[b].tail) buckets[b].tail->next = p;
+            else                 buckets[b].head       = p;
+            buckets[b].tail = p;
+            buckets[b].size++;
+            (*M)++;
+            p = next;
+        }
+
+        L->head = L->tail = NULL;
+        L->size = 0;
+        for (int i = 0; i < 256; i++) {
+            if (!buckets[i].head) continue;
+            if (L->tail) L->tail->next = buckets[i].head;
+            else         L->head       = buckets[i].head;
+            L->tail = buckets[i].tail;
+            L->size += buckets[i].size;
+        }
+    }
+
+    if (!asc) {
+        /* Реверс */
+        StrNode *prev = NULL, *cur = L->head, *next;
+        L->tail = L->head;
+        while (cur) {
+            next      = cur->next;
+            cur->next = prev;
+            prev      = cur;
+            cur       = next;
+        }
+        L->head = prev;
+    }
 }
