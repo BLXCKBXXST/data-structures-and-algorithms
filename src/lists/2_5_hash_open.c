@@ -1,6 +1,6 @@
 /*
  * 2.5 — Хеширование методом открытой адресации
- * Тестовые данные: 12 неповторяющихся символов из "IvanovAleksePetr".
+ * Тестовые данные: 52 неповторяющихся символа — латиница A–Z и a–z.
  * Линейные пробы: h(k,i) = (h0 + i)   mod m
  * Квадратичные:   h(k,i) = (h0 + i²)  mod m
  */
@@ -8,44 +8,32 @@
 #include <stdlib.h>
 #include "hash.h"
 
-static const char SYMBOLS[] = {'I','v','a','n','o','A','l','e','k','s','P','t'};
-static const int  N = sizeof(SYMBOLS) / sizeof(SYMBOLS[0]);
+/* 52 уникальных символа: латиница A–Z и a–z */
+static const char SYMBOLS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+static const int  N = (int)sizeof(SYMBOLS) - 1;   /* без завершающего '\0' */
 
-static const int PRIMES[] = {11, 17, 23, 31, 41, 53, 61, 71, 83, 97};
-static const int NP = sizeof(PRIMES) / sizeof(PRIMES[0]);
-
+/* Вывод хеш-таблицы вертикально, ячейка за ячейкой: при больших m
+ * горизонтальная таблица 0..m-1 не умещается по ширине экрана. */
 static void PrintHashTable(const char *title, const HashOpen *H) {
     printf("%s\n", title);
-    printf("┌──────────────┬");
-    for (int i = 0; i < H->m; i++) printf("─────┬");
-    printf("\b┐\n");
-    printf("│ Номер ячейки │");
-    for (int i = 0; i < H->m; i++) printf(" %3d │", i);
-    printf("\n├──────────────┼");
-    for (int i = 0; i < H->m; i++) printf("─────┼");
-    printf("\b┤\n");
-    printf("│   Символ     │");
     for (int i = 0; i < H->m; i++) {
-        if (H->table[i] == -1) printf("  .  │");
-        else                   printf("  %c  │", (char)H->table[i]);
+        if (H->table[i] == -1) printf("  ячейка[%3d]: .\n", i);
+        else                   printf("  ячейка[%3d]: %c\n", i, (char)H->table[i]);
     }
-    printf("\n└──────────────┴");
-    for (int i = 0; i < H->m; i++) printf("─────┴");
-    printf("\b┘\n");
 }
 
 int main(void) {
     /* ===================================================================
-     * 2.5.2 — Реализация хеширования методом открытой адресации (m=11)
+     * 2.5.2 — Реализация хеширования методом открытой адресации (m=107)
      * Линейные и квадратичные пробы; вывод обеих заполненных таблиц.
      * =================================================================== */
     printf("┌──────────────────────────────────────────────────────────────┐\n");
-    printf("│  2.5.2 — Открытая адресация (m=11, n=%2d)                     │\n", N);
+    printf("│  2.5.2 — Открытая адресация (m=107, n=%2d)                    │\n", N);
     printf("└──────────────────────────────────────────────────────────────┘\n");
 
     HashOpen Hl, Hq;
-    HashOpenInit(&Hl, 11, PROBE_LINEAR);
-    HashOpenInit(&Hq, 11, PROBE_QUADRATIC);
+    HashOpenInit(&Hl, 107, PROBE_LINEAR);
+    HashOpenInit(&Hq, 107, PROBE_QUADRATIC);
 
     int Kl = 0, Kq = 0;
     for (int i = 0; i < N; i++) HashOpenInsert(&Hl, (int)SYMBOLS[i], &Kl);
@@ -66,15 +54,15 @@ int main(void) {
 
     /* ===================================================================
      * 2.5.3 — Сравнение коллизий: линейные vs квадратичные пробы
-     * для 10 простых чисел в диапазоне 11..101
+     * для нечётных размеров таблицы от 11 до 101 (шаг 2)
      * =================================================================== */
     printf("\n        2.5.3 — Сравнение количества коллизий\n");
     printf("┌──────────────┬──────────────────┬──────────────────┬──────────────────┐\n");
     printf("│ Размер хеш-  │ Кол-во исходных  │ Линейные пробы   │ Квадрат. пробы   │\n");
     printf("│   таблицы    │     символов     │     Кф           │     Кф           │\n");
     printf("├──────────────┼──────────────────┼──────────────────┼──────────────────┤\n");
-    for (int p = 0; p < NP; p++) {
-        int m = PRIMES[p];
+    /* размеры хеш-таблицы — нечётные числа от 11 до 101 с шагом 2 */
+    for (int m = 11; m <= 101; m += 2) {
         HashOpenInit(&Hl, m, PROBE_LINEAR);
         HashOpenInit(&Hq, m, PROBE_QUADRATIC);
         int kl = 0, kq = 0;
@@ -89,10 +77,10 @@ int main(void) {
     /* ===================================================================
      * 2.5.4* — Поиск элемента с заданным ключом для обеих стратегий
      * =================================================================== */
-    printf("\n              2.5.4* — Поиск элемента (m=11)\n");
+    printf("\n              2.5.4* — Поиск элемента (m=107)\n");
 
-    HashOpenInit(&Hl, 11, PROBE_LINEAR);
-    HashOpenInit(&Hq, 11, PROBE_QUADRATIC);
+    HashOpenInit(&Hl, 107, PROBE_LINEAR);
+    HashOpenInit(&Hq, 107, PROBE_QUADRATIC);
     Kl = 0; Kq = 0;
     for (int i = 0; i < N; i++) HashOpenInsert(&Hl, (int)SYMBOLS[i], &Kl);
     for (int i = 0; i < N; i++) HashOpenInsert(&Hq, (int)SYMBOLS[i], &Kq);
@@ -103,15 +91,15 @@ int main(void) {
     for (int i = 0; i < N; i++) {
         int posL = HashOpenSearch(&Hl, (int)SYMBOLS[i]);
         int posQ = HashOpenSearch(&Hq, (int)SYMBOLS[i]);
-        int h = (unsigned)SYMBOLS[i] % 11u;
+        int h = (unsigned)SYMBOLS[i] % 107u;
         printf("│   %c    │ %12d │ %13d │ %14d │\n", SYMBOLS[i], h, posL, posQ);
     }
     printf("└────────┴──────────────┴───────────────┴────────────────┘\n");
 
     /* Поиск отсутствующего */
-    int posL = HashOpenSearch(&Hl, (int)'Z');
-    int posQ = HashOpenSearch(&Hq, (int)'Z');
-    printf("\nПоиск 'Z' (отсутствует): линейные → %d, квадратичные → %d\n",
+    int posL = HashOpenSearch(&Hl, (int)'?');
+    int posQ = HashOpenSearch(&Hq, (int)'?');
+    printf("\nПоиск '?' (отсутствует): линейные → %d, квадратичные → %d\n",
            posL, posQ);
 
     HashOpenFree(&Hl);
